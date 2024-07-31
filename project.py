@@ -67,14 +67,25 @@ print(df1)
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
 
 # Define features and target variable
 X = df1[['Pricing_for_2', 'Delivery_Rating']]
 y = df1['Dining_Rating']
 
-# Encoding categorical variables
-le = LabelEncoder()
-y = le.fit_transform(y)
+# Check for missing values
+print("Missing values in features before imputation:\n", X.isnull().sum())
+print("Missing values in target before imputation:\n", y.isnull().sum())
+
+# Handling missing values by imputing with mean
+imputer = SimpleImputer(strategy='mean')
+X = imputer.fit_transform(X)
+y = y.fillna(y.mean())
+
+# Verify no missing values after imputation
+print("Missing values in features after imputation:\n", pd.DataFrame(X, columns=['Pricing_for_2', 'Delivery_Rating']).isnull().sum())
+print("Missing values in target after imputation:\n", y.isnull().sum())
 
 # Split data into training and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -114,14 +125,24 @@ plt.title('Restaurant Clusters')
 plt.show()
 
 # Content-Based Filtering(Recommendation Systems)
+# Importing required modules
+from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
+from sklearn.impute import SimpleImputer
 
-# Create a feature matrix
+# Define the feature matrix
 features = df1[['Pricing_for_2', 'Delivery_Rating']]
+
+# Check for missing values and handle them
+imputer = SimpleImputer(strategy='mean')
+features_imputed = imputer.fit_transform(features)
+
+# Verify no missing values after imputation
+print("Missing values in features after imputation:\n", pd.DataFrame(features_imputed, columns=['Pricing_for_2', 'Delivery_Rating']).isnull().sum())
 
 # Scale numerical features
 scaler = StandardScaler()
-features_scaled = scaler.fit_transform(features)
+features_scaled = scaler.fit_transform(features_imputed)
 
 # Fit Nearest Neighbors model
 model = NearestNeighbors(n_neighbors=5, algorithm='ball_tree')
@@ -129,6 +150,7 @@ model.fit(features_scaled)
 
 # Find similar restaurants
 distances, indices = model.kneighbors([features_scaled[0]])
+
 print("Similar restaurants:")
 for i in indices[0]:
     print(df1.iloc[i])
